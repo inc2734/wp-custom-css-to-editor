@@ -28,7 +28,7 @@ class Bootstrap {
 	/**
 	 * Add the aditional CSS to editor.
 	 */
-	public function _admin_head() {
+	public function _add_editor_style() {
 		$css = $this->_get_minified_custom_css();
 		if ( ! $css ) {
 			return;
