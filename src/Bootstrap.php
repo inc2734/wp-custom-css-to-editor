@@ -34,7 +34,26 @@ class Bootstrap {
 			return;
 		}
 
-		$css = preg_replace( '/([^\{\}\(\)@]+?)(\{)/s', '.editor-styles-wrapper $1,.customize-control-sidebar_block_editor $1$2', $css );
+		$css = preg_replace_callback(
+			'/([^\{\}\(\)@]+?)(\{[^\}]*\})/s',
+			function( $matches ) {
+				$selectors = array_map(
+					function( $selector ) {
+						return trim( $selector );
+					},
+					explode( ',', $matches[1] )
+				);
+				$new_css   = [];
+				foreach ( $selectors as $selector ) {
+					$new_css[] = sprintf(
+						'.editor-styles-wrapper %1$s,.customize-control-sidebar_block_editor %1$s%',
+						$selector
+					);
+				}
+				return implode( ',', $new_css ) . $matches[2];
+			},
+			$css
+		);
 		?>
 		<style id="wp-custom-css">
 		<?php echo strip_tags( $css ); // WPCS XSS ok. ?>
@@ -54,7 +73,26 @@ class Bootstrap {
 			return $mce_init;
 		}
 
-		$css = preg_replace( '/([^\{\}\(\)@]+?\{)/s', '.mce-content-body.mceContentBody $1', $css );
+		$css = preg_replace_callback(
+			'/([^\{\}\(\)@]+?)(\{[^\}]*\})/s',
+			function( $matches ) {
+				$selectors = array_map(
+					function( $selector ) {
+						return trim( $selector );
+					},
+					explode( ',', $matches[1] )
+				);
+				$new_css   = [];
+				foreach ( $selectors as $selector ) {
+					$new_css[] = sprintf(
+						'.mce-content-body.mceContentBody %1$s%',
+						$selector
+					);
+				}
+				return implode( ',', $new_css ) . $matches[2];
+			},
+			$css
+		);
 
 		if ( ! isset( $mce_init['content_style'] ) ) {
 			$mce_init['content_style'] = '';
