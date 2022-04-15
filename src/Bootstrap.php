@@ -46,7 +46,7 @@ class Bootstrap {
 				$new_css   = [];
 				foreach ( $selectors as $selector ) {
 					$new_css[] = sprintf(
-						'.editor-styles-wrapper %1$s,.customize-control-sidebar_block_editor %1$s%',
+						'.editor-styles-wrapper %1$s,.customize-control-sidebar_block_editor %1$s',
 						$selector
 					);
 				}
@@ -85,7 +85,7 @@ class Bootstrap {
 				$new_css   = [];
 				foreach ( $selectors as $selector ) {
 					$new_css[] = sprintf(
-						'.mce-content-body.mceContentBody %1$s%',
+						'.mce-content-body.mceContentBody %1$s',
 						$selector
 					);
 				}
