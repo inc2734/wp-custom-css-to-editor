@@ -36,9 +36,9 @@ class Bootstrap {
 
 		$css = preg_replace_callback(
 			'/([^\{\}\(\)@]+?)(\{[^\}]*\})/s',
-			function( $matches ) {
+			function ( $matches ) {
 				$selectors = array_map(
-					function( $selector ) {
+					function ( $selector ) {
 						return trim( $selector );
 					},
 					explode( ',', $matches[1] )
@@ -75,9 +75,9 @@ class Bootstrap {
 
 		$css = preg_replace_callback(
 			'/([^\{\}\(\)@]+?)(\{[^\}]*\})/s',
-			function( $matches ) {
+			function ( $matches ) {
 				$selectors = array_map(
-					function( $selector ) {
+					function ( $selector ) {
 						return trim( $selector );
 					},
 					explode( ',', $matches[1] )

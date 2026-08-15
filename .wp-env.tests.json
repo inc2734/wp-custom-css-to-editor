@@ -1,0 +1,11 @@
+{
+	"core": null,
+	"port": 8889,
+	"mappings": {
+		"wp-content/plugins/wp-custom-css-to-editor": "./"
+	},
+	"config": {
+		"WP_DEBUG": true
+	},
+	"testsEnvironment": false
+}
