@@ -4,7 +4,6 @@ composer.lock
 composer-dev.json
 composer-dev.lock
 node_modules/
-package-lock.json
 .phpunit.result.cache
 .wp-env.override.json
 .wp-env.tests.override.json

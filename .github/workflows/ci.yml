@@ -26,11 +26,11 @@ jobs:
     - name: Use Node.js 24
       uses: actions/setup-node@v7
       with:
-        node-version: 24
-        package-manager-cache: false
+        node-version-file: package.json
+        cache: npm
 
-    - name: Npm install
-      run: npm install
+    - name: Npm clean install
+      run: npm ci
 
     - name: Running the tests
       run: npm run test

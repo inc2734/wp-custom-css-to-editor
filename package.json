@@ -1,10 +1,16 @@
 {
+  "private": true,
   "author": "inc2734",
   "license": "GPL-2.0+",
+  "engines": {
+    "node": ">=20.19.0",
+    "npm": ">=10.2.3"
+  },
+  "volta": {
+    "node": "24.14.1"
+  },
   "devDependencies": {
-    "@wordpress/env": "^11.13.0",
-    "npm-run-all": "^4.1.5",
-    "rimraf": "^3.0.2"
+    "@wordpress/env": "^11.13.0"
   },
   "scripts": {
     "wp-env": "wp-env",
@@ -20,12 +26,12 @@
     "test:php:lint": "wp-env run wordpress --config=.wp-env.tests.json --env-cwd=wp-content/plugins/wp-custom-css-to-editor composer run-script lint",
     "posttest:php:lint": "npm run test:php:stop",
     "test:lint:php": "npm run test:php:lint || (status=$?; npm run test:php:stop; exit $status)",
-    "test:lint": "run-s test:lint:*",
+    "test:lint": "npm run test:lint:php",
     "pretest:php:unit": "npm run test:php:start && npm run test-composer -- install --no-interaction",
     "test:php:unit": "wp-env run wordpress --config=.wp-env.tests.json --env-cwd=wp-content/plugins/wp-custom-css-to-editor vendor/bin/phpunit -- -c .phpunit.xml.dist --verbose",
     "posttest:php:unit": "npm run test:php:stop",
     "test:unit:php": "npm run test:php:unit || (status=$?; npm run test:php:stop; exit $status)",
-    "test:unit": "run-s test:unit:*",
-    "test": "run-s test:lint test:unit"
+    "test:unit": "npm run test:unit:php",
+    "test": "npm run test:lint && npm run test:unit"
   }
 }
