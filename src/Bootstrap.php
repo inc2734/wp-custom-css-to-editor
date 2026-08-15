@@ -13,52 +13,31 @@ class Bootstrap {
 	 * Constructor.
 	 */
 	public function __construct() {
-		add_action( 'enqueue_block_editor_assets', [ $this, '_enqueue_block_editor_assets' ] );
+		add_filter( 'block_editor_settings_all', [ $this, '_block_editor_settings_all' ] );
 		add_filter( 'tiny_mce_before_init', [ $this, '_tiny_mce_before_init' ], 11 );
 	}
 
 	/**
-	 * Additional CSS to the block editor.
+	 * Add the additional CSS to the block editor.
+	 *
+	 * WordPress adds these styles to the editor canvas and prefixes them with
+	 * `.editor-styles-wrapper`.
+	 *
+	 * @param array $editor_settings The current block editor settings.
+	 * @return array
 	 */
-	public function _enqueue_block_editor_assets() {
-		add_action( 'admin_head', [ $this, '_add_editor_style' ] );
-		add_action( 'customize_controls_head', [ $this, '_add_editor_style' ] );
-	}
-
-	/**
-	 * Add the aditional CSS to editor.
-	 */
-	public function _add_editor_style() {
+	public function _block_editor_settings_all( $editor_settings ) {
 		$css = $this->_get_minified_custom_css();
 		if ( ! $css ) {
-			return;
+			return $editor_settings;
 		}
 
-		$css = preg_replace_callback(
-			'/([^\{\}\(\)@]+?)(\{[^\}]*\})/s',
-			function ( $matches ) {
-				$selectors = array_map(
-					function ( $selector ) {
-						return trim( $selector );
-					},
-					explode( ',', $matches[1] )
-				);
-				$new_css   = [];
-				foreach ( $selectors as $selector ) {
-					$new_css[] = sprintf(
-						'.editor-styles-wrapper %1$s,.customize-control-sidebar_block_editor %1$s',
-						$selector
-					);
-				}
-				return implode( ',', $new_css ) . $matches[2];
-			},
-			$css
-		);
-		?>
-		<style id="wp-custom-css">
-		<?php echo strip_tags( $css ); // WPCS XSS ok. ?>
-		</style>
-		<?php
+		if ( ! isset( $editor_settings['styles'] ) || ! is_array( $editor_settings['styles'] ) ) {
+			$editor_settings['styles'] = [];
+		}
+
+		$editor_settings['styles'][] = [ 'css' => $css ];
+		return $editor_settings;
 	}
 
 	/**
