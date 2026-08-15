@@ -24,28 +24,102 @@ class Testable_Bootstrap extends Inc2734\WP_Custom_CSS_To_Editor\Bootstrap {
 class Bootstrap_Test extends WP_UnitTestCase {
 
 	private $bootstrap;
+	private $bootstraps = [];
 
 	public function setUp(): void {
 		parent::setUp();
-		$this->bootstrap = new Testable_Bootstrap(
-			".entry, p {\n\tcolor: red;\n}"
-		);
+		$this->bootstrap = $this->create_bootstrap();
 	}
 
 	public function tearDown(): void {
-		remove_filter( 'block_editor_settings_all', [ $this->bootstrap, '_block_editor_settings_all' ] );
-		remove_filter( 'tiny_mce_before_init', [ $this->bootstrap, '_tiny_mce_before_init' ], 11 );
+		foreach ( $this->bootstraps as $bootstrap ) {
+			remove_action( 'enqueue_block_editor_assets', [ $bootstrap, '_enqueue_block_editor_assets' ] );
+			remove_filter( 'block_editor_settings_all', [ $bootstrap, '_block_editor_settings_all' ] );
+			remove_filter( 'tiny_mce_before_init', [ $bootstrap, '_tiny_mce_before_init' ], 11 );
+			remove_action( 'admin_head', [ $bootstrap, '_add_editor_style' ] );
+			remove_action( 'customize_controls_head', [ $bootstrap, '_add_editor_style' ] );
+		}
 		parent::tearDown();
 	}
 
-	public function test_registers_editor_filters() {
-		$this->assertSame(
-			10,
+	private function create_bootstrap( $wordpress_version = null ) {
+		$current_wordpress_version = $GLOBALS['wp_version'];
+
+		if ( null !== $wordpress_version ) {
+			$GLOBALS['wp_version'] = $wordpress_version;
+		}
+
+		$bootstrap = new Testable_Bootstrap(
+			".entry, p {\n\tcolor: red;\n}"
+		);
+		$this->bootstraps[] = $bootstrap;
+
+		$GLOBALS['wp_version'] = $current_wordpress_version;
+		return $bootstrap;
+	}
+
+	public function test_relies_on_core_for_block_editor_css_in_wordpress_7() {
+		if ( version_compare( $GLOBALS['wp_version'], '7.0', '<' ) ) {
+			$this->markTestSkipped( 'WordPress 7.0 or later is required.' );
+		}
+
+		$this->assertFalse(
 			has_filter( 'block_editor_settings_all', [ $this->bootstrap, '_block_editor_settings_all' ] )
 		);
+		$this->assertFalse(
+			has_action( 'enqueue_block_editor_assets', [ $this->bootstrap, '_enqueue_block_editor_assets' ] )
+		);
+	}
+
+	public function test_registers_tinymce_filter() {
 		$this->assertSame(
 			11,
 			has_filter( 'tiny_mce_before_init', [ $this->bootstrap, '_tiny_mce_before_init' ] )
+		);
+	}
+
+	public function test_wordpress_7_adds_customizer_css_once() {
+		if ( version_compare( $GLOBALS['wp_version'], '7.0', '<' ) ) {
+			$this->markTestSkipped( 'WordPress 7.0 or later is required.' );
+		}
+
+		$custom_css = '.from-customizer{color:red;}';
+		$this->assertNotWPError( wp_update_custom_css_post( $custom_css ) );
+
+		wp_styles();
+		wp_scripts();
+		$editor_settings = get_block_editor_settings( [], new WP_Block_Editor_Context() );
+		$matching_styles = array_filter(
+			$editor_settings['styles'],
+			function ( $style ) use ( $custom_css ) {
+				return isset( $style['css'] ) && $custom_css === $style['css'];
+			}
+		);
+
+		$this->assertCount( 1, $matching_styles );
+	}
+
+	public function test_registers_editor_settings_filter_before_wordpress_7() {
+		$bootstrap = $this->create_bootstrap( '6.9' );
+
+		$this->assertSame(
+			10,
+			has_filter( 'block_editor_settings_all', [ $bootstrap, '_block_editor_settings_all' ] )
+		);
+		$this->assertFalse(
+			has_action( 'enqueue_block_editor_assets', [ $bootstrap, '_enqueue_block_editor_assets' ] )
+		);
+	}
+
+	public function test_registers_legacy_editor_action_before_wordpress_5_8() {
+		$bootstrap = $this->create_bootstrap( '5.7' );
+
+		$this->assertSame(
+			10,
+			has_action( 'enqueue_block_editor_assets', [ $bootstrap, '_enqueue_block_editor_assets' ] )
+		);
+		$this->assertFalse(
+			has_filter( 'block_editor_settings_all', [ $bootstrap, '_block_editor_settings_all' ] )
 		);
 	}
 

@@ -13,12 +13,23 @@ class Bootstrap {
 	 * Constructor.
 	 */
 	public function __construct() {
-		add_filter( 'block_editor_settings_all', [ $this, '_block_editor_settings_all' ] );
+		global $wp_version;
+
+		/*
+		 * WordPress 7.0 and later add Customizer CSS to the block editor.
+		 * Keep the library integration only for earlier releases.
+		 */
+		if ( version_compare( $wp_version, '5.8', '<' ) ) {
+			add_action( 'enqueue_block_editor_assets', [ $this, '_enqueue_block_editor_assets' ] );
+		} elseif ( version_compare( $wp_version, '7.0', '<' ) ) {
+			add_filter( 'block_editor_settings_all', [ $this, '_block_editor_settings_all' ] );
+		}
+
 		add_filter( 'tiny_mce_before_init', [ $this, '_tiny_mce_before_init' ], 11 );
 	}
 
 	/**
-	 * Add the additional CSS to the block editor.
+	 * Add the additional CSS to the block editor in WordPress 5.8 through 6.9.
 	 *
 	 * WordPress adds these styles to the editor canvas and prefixes them with
 	 * `.editor-styles-wrapper`.
@@ -38,6 +49,50 @@ class Bootstrap {
 
 		$editor_settings['styles'][] = [ 'css' => $css ];
 		return $editor_settings;
+	}
+
+	/**
+	 * Additional CSS to the block editor in WordPress 5.7 and earlier.
+	 */
+	public function _enqueue_block_editor_assets() {
+		add_action( 'admin_head', [ $this, '_add_editor_style' ] );
+		add_action( 'customize_controls_head', [ $this, '_add_editor_style' ] );
+	}
+
+	/**
+	 * Add the additional CSS to the editor in WordPress 5.7 and earlier.
+	 */
+	public function _add_editor_style() {
+		$css = $this->_get_minified_custom_css();
+		if ( ! $css ) {
+			return;
+		}
+
+		$css = preg_replace_callback(
+			'/([^\{\}\(\)@]+?)(\{[^\}]*\})/s',
+			function ( $matches ) {
+				$selectors = array_map(
+					function ( $selector ) {
+						return trim( $selector );
+					},
+					explode( ',', $matches[1] )
+				);
+				$new_css   = [];
+				foreach ( $selectors as $selector ) {
+					$new_css[] = sprintf(
+						'.editor-styles-wrapper %1$s,.customize-control-sidebar_block_editor %1$s',
+						$selector
+					);
+				}
+				return implode( ',', $new_css ) . $matches[2];
+			},
+			$css
+		);
+		?>
+		<style id="wp-custom-css">
+		<?php echo strip_tags( $css ); // WPCS XSS ok. ?>
+		</style>
+		<?php
 	}
 
 	/**
